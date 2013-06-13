@@ -59,6 +59,9 @@
     [self.tableView registerNib:[UINib nibWithNibName:@"CategoryCell" bundle:nil] forCellReuseIdentifier:@"CategoryCell"];
     [self.tableView registerNib:[UINib nibWithNibName:@"AddCategoryCell" bundle:nil] forCellReuseIdentifier:@"AddCategoryCell"];
     
+    // size image
+    [self sizeImageToFit];
+
     // l10n
     self.title = [MWMessage forKey:@"details-title"].text;
     self.uploadButton.title = [MWMessage forKey:@"details-upload-button"].text;
@@ -200,6 +203,18 @@
     tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(focusOnDescriptionTextView)];
     [self.descCell addGestureRecognizer:tapGesture];
     
+}
+
+- (void)sizeImageToFit
+{
+    CGSize oldSize = self.imagePreview.frame.size;
+    CGSize tableSize = self.view.frame.size;
+    CGFloat width = tableSize.width;
+    CGFloat height = tableSize.height - 88;
+    if (oldSize.width != width || oldSize.height != height) {
+        self.imagePreview.frame = CGRectMake(0, 0, width, height);
+        [self.tableView reloadData];
+    }
 }
 
 - (NSString *)categoryShortList
@@ -355,6 +370,10 @@
 // hack to hide table cells
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    if (indexPath.section == 0 && indexPath.item == 0) {
+        // Stretch image preview cell to fit
+        return self.imagePreview.frame.size.height;
+    }
     if (indexPath.section == 0 && indexPath.item >= 2 && self.selectedRecord && self.selectedRecord.complete.boolValue) {
         if (self.selectedRecord.complete.boolValue) {
             // Resize description cell according to the retrieved description's text height
@@ -419,6 +438,9 @@
 
 -(void)viewWillLayoutSubviews
 {
+    // Fit the preview image to the screen size, minus some frame area
+    [self sizeImageToFit];
+
     // Add a little padding to the bottom of the table view so it can be scrolled up a bit when the
     // keyboard is shown
     UIEdgeInsets edgeInsets = UIEdgeInsetsMake(0, 0, self.view.frame.size.height / 2.0, 0);
