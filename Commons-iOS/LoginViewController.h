@@ -24,6 +24,7 @@
 @property (weak, nonatomic) IBOutlet UIImageView *logoImageView;
 @property (weak, nonatomic) IBOutlet UIView *loginInfoContainer;
 @property (weak, nonatomic) IBOutlet PictureOfTheDayImageView *potdImageView;
+@property (weak, nonatomic) IBOutlet PictureOfTheDayImageView *faderImageView;
 @property (weak, nonatomic) IBOutlet UIButton *aboutButton;
 @property (weak, nonatomic) IBOutlet UIButton *attributionButton;
 

@@ -211,6 +211,7 @@
     [self fadeLoginButtonIfNoCredentials];
 
     self.potdImageView.useFilter = NO;
+    self.faderImageView.useFilter = NO;
 
     // Ensure bundled pic of day is in cache
     [self copyToCacheBundledPotdsNamed:BUNDLED_PIC_OF_DAY_DATES extension:@"dict"];
@@ -776,6 +777,7 @@
 {
     // Prepare callback block for getting picture of the day
     __weak PictureOfTheDayImageView *weakPotdImageView = self.potdImageView;
+    __weak PictureOfTheDayImageView *weakFaderImageView = self.faderImageView;
     __weak LoginViewController *weakSelf = self;
 
     // Determine the resolution of the picture of the day to request
@@ -822,6 +824,11 @@
                                  }];
 
                 // Transistion the picture of the day
+
+                // This commented code fails intermittently in iOS 7 for some reason.
+                // After a few ok runs, about half the runs end up with binary transition
+                // instead of a smooth cross-fade.
+                /*
                 [CATransaction begin];
                 CABasicAnimation *crossFade = [CABasicAnimation animationWithKeyPath:@"contents"];
                 crossFade.duration = self.pictureOfDayCycler.transitionDuration;
@@ -835,6 +842,35 @@
                 [CATransaction commit];
                 
                 weakPotdImageView.image = image;
+                */
+                
+                // This alternate version uses a second image view.
+                // It's probably much less efficient.
+                weakFaderImageView.hidden = NO;
+                weakFaderImageView.image = image;
+                weakFaderImageView.layer.opacity = 0.0f;
+
+                [CATransaction begin];
+                CABasicAnimation *crossFade = [CABasicAnimation animationWithKeyPath:@"opacity"];
+                crossFade.duration = self.pictureOfDayCycler.transitionDuration;
+                crossFade.fromValue = @0.0f;
+                crossFade.toValue = @1.0f;
+                crossFade.removedOnCompletion = NO; // remove manually to avoid flash of wrong image
+                [CATransaction setCompletionBlock:^{
+                    // Move the new image to the main image view
+                    // and hide the fader image.
+                    weakPotdImageView.image = image;
+                    weakFaderImageView.hidden = YES;
+                    weakFaderImageView.image = nil;
+                    
+                    [weakFaderImageView.layer removeAnimationForKey:@"animatedOpacity"];
+                    
+                    if(done) done();
+                }];
+                [weakFaderImageView.layer addAnimation:crossFade forKey:@"animateOpacity"];
+                [CATransaction commit];
+
+                weakFaderImageView.layer.opacity = 1.0f;
             }
         }
     }];
